@@ -7,18 +7,18 @@ import re
 from utils import extract_text_from_pdf
 from skills import extract_skills
 
-# ── CONFIG ────
+# ── CONFIG 
 st.set_page_config(page_title="AI Resume Analyzer", layout="wide")
 st.title("Resume Screening ")
 
-# ── LOAD MODEL ─────────────
+# ── LOAD MODEL 
 @st.cache_resource
 def load_model():
     return SentenceTransformer("all-MiniLM-L6-v2")
 
 model = load_model()
 
-# ── JOB DESCRIPTION INPUT ──────
+# ── JOB DESCRIPTION 
 st.subheader("📝 Job Description")
 
 jd_option = st.radio("Choose input method:", ["Upload File", "Type Manually"])
@@ -39,7 +39,7 @@ if jd_option == "Upload File":
 else:
     job_desc = st.text_area("Enter Job Description here:", height=200)
 
-# ── EXTRACTION FUNCTIONS ───────────────────────────
+# ── EXTRACTION 
 def extract_email(text):
     emails = re.findall(r"[\w\.-]+@[\w\.-]+\.\w+", text)
     return emails[0] if emails else "Not Found"
@@ -52,7 +52,7 @@ def extract_name(text):
             return line
     return "Unknown"
 
-# ── FILE UPLOAD ────────────────────────────────────
+# ── FILE UPLOAD 
 st.subheader("📂 Upload Resumes")
 
 uploaded_files = st.file_uploader(
@@ -60,10 +60,10 @@ uploaded_files = st.file_uploader(
     accept_multiple_files=True
 )
 
-# ── ANALYZE BUTTON ─────────────────────────────────
+# ── ANALYZE BUTTON 
 analyze = st.button("▶ Analyze Resumes")
 
-# ── PROCESS ────────────────────────────────────────
+# ── PROCESS 
 if analyze and uploaded_files and job_desc.strip() != "":
 
     with st.spinner("Analyzing resumes... ⏳"):
@@ -79,7 +79,7 @@ if analyze and uploaded_files and job_desc.strip() != "":
             except:
                 st.warning(f"Error reading {file.name}")
 
-        # ── EMBEDDINGS ─────────────────────────────
+        # ── EMBEDDINGS
         jd_emb = model.encode([job_desc])
         res_emb = model.encode(texts)
 
@@ -109,7 +109,7 @@ if analyze and uploaded_files and job_desc.strip() != "":
         # Sort results
         results = sorted(results, key=lambda x: x["score"], reverse=True)
 
-    # ── RESULTS ─────────────────────────────────
+    # ── RESULTS
     st.success("✅ Analysis Complete")
 
     col1, col2 = st.columns(2)
@@ -120,7 +120,7 @@ if analyze and uploaded_files and job_desc.strip() != "":
 
     st.divider()
 
-    # ── RANKING ────────────────────────────────
+    # ── RANKING 
     for i, r in enumerate(results):
 
         col1, col2 = st.columns([1, 4])
@@ -149,7 +149,7 @@ if analyze and uploaded_files and job_desc.strip() != "":
 
         st.divider()
 
-    # ── DOWNLOAD CSV ───────────────────────────
+    # ── DOWNLOAD CSV
     df = pd.DataFrame(results)
     csv = df.to_csv(index=False).encode()
 
