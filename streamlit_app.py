@@ -3,13 +3,14 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 import pandas as pd
 import re
+import matplotlib.pyplot as plt
 
 from utils import extract_text_from_pdf
 from skills import extract_skills
 
-# ── CONFIG 
+# ── CONFIG
 st.set_page_config(page_title="AI Resume Analyzer", layout="wide")
-st.title("Resume Screening ")
+st.title("📄 Resume Screening System")
 
 # ── LOAD MODEL 
 @st.cache_resource
@@ -39,7 +40,7 @@ if jd_option == "Upload File":
 else:
     job_desc = st.text_area("Enter Job Description here:", height=200)
 
-# ── EXTRACTION 
+# ── EXTRACTION FUNCTIONS 
 def extract_email(text):
     emails = re.findall(r"[\w\.-]+@[\w\.-]+\.\w+", text)
     return emails[0] if emails else "Not Found"
@@ -52,16 +53,17 @@ def extract_name(text):
             return line
     return "Unknown"
 
-# ── FILE UPLOAD 
+# ── RESUME UPLOAD 
 st.subheader("📂 Upload Resumes")
 
 uploaded_files = st.file_uploader(
     "Upload PDF or TXT resumes",
+    type=["pdf", "txt"],
     accept_multiple_files=True
 )
 
 # ── ANALYZE BUTTON 
-analyze = st.button("▶ Analyze Resumes")
+analyze = st.button("▶️ Analyze Resumes")
 
 # ── PROCESS 
 if analyze and uploaded_files and job_desc.strip() != "":
@@ -106,10 +108,9 @@ if analyze and uploaded_files and job_desc.strip() != "":
                 "matched_skills": matched_skills
             })
 
-        # Sort results
         results = sorted(results, key=lambda x: x["score"], reverse=True)
 
-    # ── RESULTS
+    # ── RESULTS 
     st.success("✅ Analysis Complete")
 
     col1, col2 = st.columns(2)
@@ -149,7 +150,27 @@ if analyze and uploaded_files and job_desc.strip() != "":
 
         st.divider()
 
-    # ── DOWNLOAD CSV
+    # ── VERTICAL BAR GRAPH 
+    st.subheader("📊 Candidate Score Comparison")
+
+    if results:
+        graph_df = pd.DataFrame(results)
+        graph_df = graph_df.sort_values(by="score", ascending=False)
+
+        fig, ax = plt.subplots(figsize=(10, 5))
+
+        ax.bar(graph_df["candidate_name"], graph_df["score"])
+
+        ax.set_xlabel("Candidates")
+        ax.set_ylabel("Match Score (%)")
+        ax.set_title("Resume Matching Scores")
+        ax.set_ylim(0, 100)
+
+        plt.xticks(rotation=45, ha="right")
+
+        st.pyplot(fig)
+
+    # ── DOWNLOAD CSV 
     df = pd.DataFrame(results)
     csv = df.to_csv(index=False).encode()
 
